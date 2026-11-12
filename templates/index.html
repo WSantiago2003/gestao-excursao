@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excursão Aparecida do Norte | Gestão de Poltronas</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>🚌 Excursão Aparecida do Norte</h1>
+            <p class="subtitulo">Controle de Poltronas e Pagamentos</p>
+        </header>
+
+        <!-- Painel de Resumo Financeiro e Ocupação -->
+        <section class="resumo-grid">
+            <div class="card-resumo">
+                <span>Poltronas Livres</span>
+                <strong id="resumoLivres">46</strong>
+            </div>
+            <div class="card-resumo">
+                <span>Ocupadas (Parcial / Pago)</span>
+                <strong id="resumoOcupadas">0</strong>
+            </div>
+            <div class="card-resumo verde">
+                <span>Total Arrecadado</span>
+                <strong id="resumoArrecadado">R$ 0,00</strong>
+            </div>
+            <div class="card-resumo amarelo">
+                <span>Falta Receber</span>
+                <strong id="resumoReceber">R$ 0,00</strong>
+            </div>
+        </section>
+
+        <!-- Legenda de Cores -->
+        <div class="legenda">
+            <div class="legenda-item"><span class="cor livre"></span> Livre</div>
+            <div class="legenda-item"><span class="cor parcial"></span> Pagamento Parcial</div>
+            <div class="legenda-item"><span class="cor pago"></span> Quitada (R$ 180)</div>
+        </div>
+
+        <!-- Legenda de Cores -->
+        <div class="legenda">
+            <div class="legenda-item"><span class="cor livre"></span> Livre</div>
+            <div class="legenda-item"><span class="cor parcial"></span> Pagamento Parcial</div>
+            <div class="legenda-item"><span class="cor pago"></span> Quitada (R$ 180)</div>
+        </div>
+
+        <!-- Botão de Exportação da Lista de Embarque -->
+        <div class="barra-acoes">
+            <button class="btn-exportar" onclick="exportarListaEmbarque()">
+                📋 Baixar Lista de Embarque (Excel / CSV)
+            </button>
+        </div>
+
+        <!-- Estrutura Visual do Ônibus -->
+        <section class="onibus-container">
+            <div class="frente-onibus">🧑‍✈️ Motorista / Frente do Ônibus</div>
+            <div id="mapaPoltronas" class="mapa-poltronas">
+                <!-- Poltronas geradas via JavaScript -->
+            </div>
+        </section>
+    </div>
+
+    <!-- Modal de Edição / Consulta de Pagamento -->
+    <div id="modalPoltrona" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Poltrona #<span id="modalNumero">01</span></h2>
+                <button class="btn-fechar" onclick="fecharModal()">✖</button>
+            </div>
+
+            <form id="formPoltrona" onsubmit="salvarPoltrona(event)">
+                <input type="hidden" id="poltronaNumero">
+
+                <div class="input-group">
+                    <label>Nome Completo do Passageiro *</label>
+                    <input type="text" id="passageiro" placeholder="Ex: Maria da Silva" required>
+                </div>
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Telefone / WhatsApp</label>
+                        <input type="text" id="telefone" placeholder="(21) 99999-9999">
+                    </div>
+                    <div class="input-group">
+                        <label>Documento (RG ou CPF)</label>
+                        <input type="text" id="documento" placeholder="Para lista de embarque">
+                    </div>
+                </div>
+
+                <hr class="divisor">
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Valor da Passagem (R$)</label>
+                        <input type="number" step="0.01" id="valorTotal" value="180.00" oninput="recalcularRestante()" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Valor Já Pago (R$)</label>
+                        <input type="number" step="0.01" id="valorPago" value="0.00" oninput="recalcularRestante()" required>
+                    </div>
+                </div>
+
+                <!-- Atalho para somar pagamento rápido -->
+                <div class="atalho-pagamento">
+                    <input type="number" step="0.01" id="novoPagamento" placeholder="Ex: 50.00">
+                    <button type="button" class="btn-somar" onclick="adicionarParcela()">+ Somar Parcela</button>
+                </div>
+
+                <!-- Box de Consulta Rápida -->
+                <div class="box-saldo">
+                    <span>Falta Pagar:</span>
+                    <strong id="valorRestanteTexto">R$ 180,00</strong>
+                </div>
+
+                <div class="modal-acoes">
+                    <button type="button" id="btnLiberar" class="btn-liberar" onclick="liberarPoltrona()">🗑️ Liberar Poltrona</button>
+                    <button type="submit" class="btn-salvar">💾 Salvar Dados</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+    <!-- Tela de Bloqueio por Senha -->
+    <div id="telaLogin" class="modal ativo" style="background: #1a252f;">
+        <div class="modal-content" style="max-width: 360px; text-align: center;">
+            <h2 style="margin-bottom: 10px;">🔒 Acesso Restrito</h2>
+            <p style="font-size: 0.9rem; color: #666; margin-bottom: 15px;">Digite a senha da excursão para gerenciar as poltronas:</p>
+            <input type="password" id="senhaAcesso" placeholder="Senha" style="margin-bottom: 12px; text-align: center;">
+            <button class="btn-salvar" style="width: 100%;" onclick="verificarSenha()">Entrar</button>
+        </div>
+    </div>
+</html>

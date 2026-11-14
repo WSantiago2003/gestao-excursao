@@ -114,29 +114,49 @@ async function carregarResumo() {
 async function carregarPoltronas() {
     try {
         const res = await apiFetch(`${API_URL}/api/poltronas`);
-        const poltronas = await res.json();
+        const poltronas = await res.json(); // Array de 1 a 46
 
         const container = document.getElementById('mapaPoltronas');
-        container.innerHTML = '';
+        container.innerHTML = ''; // Limpa o mapa antigo
 
-        poltronas.forEach(p => {
+        // Itera sobre o array de poltronas recebido da API
+        poltronas.forEach((p, index) => {
+            // 1. Cria o botão da poltrona (mantendo sua lógica original)
             const btn = document.createElement('button');
             btn.className = `poltrona ${p.status}`;
             btn.onclick = () => abrirModal(p);
 
-            // Blindagem contra XSS usando textContent
             const spanNum = document.createElement('span');
             spanNum.className = 'num';
             spanNum.textContent = String(p.numero).padStart(2, '0');
 
             const spanNome = document.createElement('span');
             spanNome.className = 'nome-curto';
-            spanNome.textContent = p.passageiro ? p.passageiro.split(' ')[0] : 'Livre';
-
             btn.appendChild(spanNum);
             btn.appendChild(spanNome);
+
+            // Define o texto do nome (Livre ou primeiro nome) - usando textContent de forma segura
+            if (p.passageiro) {
+                spanNome.textContent = p.passageiro.split(' ')[0];
+            } else {
+                spanNome.textContent = 'Livre';
+                spanNome.style.color = '#999'; // Cor mais clara para "Livre"
+            }
+            
+            // 2. Adiciona a poltrona ao container Grid
             container.appendChild(btn);
+
+            // 3. LÓGICA DO CORREDOR:
+            // Se a poltrona atual for par e não for a última (46), adicione o elemento de corredor.
+            // Isso cria o espaço entre 01|02 [corredor] 03|04
+            // E 05|06 [corredor] 07|08, etc.
+            if (p.numero % 2 === 0 && p.numero < poltronas.length) {
+                const corredorDiv = document.createElement('div');
+                corredorDiv.className = 'corredor-espaco';
+                container.appendChild(corredorDiv);
+            }
         });
+
     } catch (e) {
         console.error('Erro ao carregar poltronas', e);
     }

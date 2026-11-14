@@ -93,77 +93,119 @@ header h1 {
 .cor.pago { background-color: #55efc4; border-color: #00b894; }
 
 /* Desenho do Ônibus */
+/* Ajuste geral do contêiner principal */
 .onibus-container {
     background: #fff;
-    max-width: 440px;
+    max-width: 500px; /* Aumentei um pouco a largura para caber duas colunas */
     margin: 0 auto;
-    padding: 20px;
-    border-radius: 25px 25px 12px 12px;
+    padding: 25px;
+    border-radius: 25px 25px 15px 15px;
     box-shadow: 0 6px 20px rgba(0,0,0,0.1);
     border: 3px solid #bdc3c7;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
+/* Estilo do cabeçalho Motorista */
 .frente-onibus {
     background: #34495e;
     color: #fff;
     text-align: center;
-    padding: 10px;
-    border-radius: 15px 15px 5px 5px;
+    padding: 12px;
+    border-radius: 10px;
     font-weight: bold;
-    font-size: 0.9rem;
-    margin-bottom: 20px;
+    font-size: 1rem;
 }
 
+/* Novo contêiner para o mapa e scroll */
+.mapa-scroll {
+    width: 100%;
+    max-height: 60vh; /* Limita a altura para criar scroll se tiver muitas poltronas */
+    overflow-y: auto; /* Permite rolar a lista */
+    padding-right: 10px;
+}
+
+/* O Mapa agora é uma Grid de 5 colunas (Esq / Esq / Corredor / Dir / Dir) */
 .mapa-poltronas {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.fileira {
     display: grid;
-    grid-template-columns: 1fr 1fr 35px 1fr 1fr;
-    gap: 8px;
-    align-items: center;
+    grid-template-columns: 1fr 1fr 30px 1fr 1fr; /* ColunaE1, ColunaE2, Corredor, ColunaD1, ColunaD2 */
+    gap: 10px; /* Espaçamento entre poltronas */
+    width: 100%;
 }
 
-.corredor {
-    text-align: center;
-    color: #bdc3c7;
-    font-size: 0.75rem;
-}
-
+/* Estilo base da poltrona (botão) */
 .poltrona {
     background-color: #ffffff;
     border: 2px solid #cbd5e1;
     border-radius: 8px;
-    padding: 10px 4px;
+    padding: 8px 2px; /* Ajuste de padding */
     text-align: center;
     cursor: pointer;
-    transition: transform 0.15s, box-shadow 0.15s;
-    min-height: 58px;
+    transition: all 0.2s ease;
+    min-height: 50px; /* Altura fixa */
     display: flex;
     flex-direction: column;
     justify-content: center;
 }
 
+/* Efeito hover */
 .poltrona:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+    border-color: #3498db; /* Borda azul ao passar o mouse */
 }
 
+/* Texto do número */
 .poltrona .num {
     font-weight: bold;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
+    display: block;
 }
 
+/* Texto do nome curto */
 .poltrona .nome-curto {
-    font-size: 0.7rem;
+    font-size: 0.65rem; /* Fonte menor para caber nomes */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 72px;
+    max-width: 65px; /* Limita o tamanho do texto */
     margin: 2px auto 0;
+    display: block;
+    color: #666;
+}
+
+/* Cores de Status das Poltronas (mantive as suas) */
+.poltrona.livre {
+    background-color: #ffffff;
+    border-color: #cbd5e1;
+}
+
+.poltrona.parcial {
+    background-color: #fff3cd; /* Amarelo claro */
+    border-color: #ffc107;
+    color: #856404;
+}
+
+.poltrona.pago {
+    background-color: #d4edda; /* Verde claro */
+    border-color: #28a745;
+    color: #155724;
+}
+
+/* Estilo para o espaço do corredor (vazio na grid) */
+.corredor-espaco {
+    grid-column: 3; /* Força a ficar na terceira coluna da grid */
+    pointer-events: none; /* Não é clicável */
+}
+
+/* Estilo para o scrollbar ficar mais bonito */
+.mapa-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+.mapa-scroll::-webkit-scrollbar-thumb {
+    background-color: #bdc3c7;
+    border-radius: 3px;
 }
 
 /* Cores de Status das Poltronas */

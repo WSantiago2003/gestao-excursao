@@ -56,11 +56,15 @@
         <!-- Estrutura Visual do Ônibus -->
         <section class="onibus-container">
             <div class="frente-onibus">🧑‍✈️ Motorista / Frente do Ônibus</div>
-            <div id="mapaPoltronas" class="mapa-poltronas">
-                <!-- Poltronas geradas via JavaScript -->
+            
+            <!-- Adicionamos esta div extra "mapa-scroll" para gerenciar o tamanho e corredor -->
+            <div class="mapa-scroll">
+                <!-- Esta div "mapa-poltronas" é onde o seu JS joga os botões -->
+                <div id="mapaPoltronas" class="mapa-poltronas">
+                    <!-- As poltronas serão geradas aqui -->
+                </div>
             </div>
         </section>
-    </div>
 
     <!-- Modal de Edição / Consulta de Pagamento -->
     <div id="modalPoltrona" class="modal" style="display: none;">

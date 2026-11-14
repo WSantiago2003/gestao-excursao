@@ -126,69 +126,81 @@ header h1 {
     padding-right: 10px;
 }
 
-/* O Mapa agora é uma Grid de 5 colunas (Esq / Esq / Corredor / Dir / Dir) */
+/* Contêiner principal do mapa */
 .mapa-poltronas {
-    display: grid;
-    grid-template-columns: 1fr 1fr 30px 1fr 1fr; /* ColunaE1, ColunaE2, Corredor, ColunaD1, ColunaD2 */
-    gap: 10px; /* Espaçamento entre poltronas */
-    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
-/* Estilo base da poltrona (botão) */
+/* Cada fileira é uma grelha de 5 colunas: [Esq1] [Esq2] [Corredor] [Dir1] [Dir2] */
+.fileira {
+    display: grid;
+    grid-template-columns: 1fr 1fr 30px 1fr 1fr;
+    gap: 8px;
+    align-items: center;
+}
+
+/* Espaço do corredor central */
+.corredor {
+    text-align: center;
+    color: #bdc3c7;
+    font-size: 0.75rem;
+    user-select: none;
+}
+
+/* Estilo base da poltrona */
 .poltrona {
     background-color: #ffffff;
     border: 2px solid #cbd5e1;
     border-radius: 8px;
-    padding: 8px 2px; /* Ajuste de padding */
+    padding: 8px 2px;
     text-align: center;
     cursor: pointer;
     transition: all 0.2s ease;
-    min-height: 50px; /* Altura fixa */
+    min-height: 50px;
     display: flex;
     flex-direction: column;
     justify-content: center;
 }
 
-/* Efeito hover */
 .poltrona:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0,0,0,0.12);
-    border-color: #3498db; /* Borda azul ao passar o mouse */
+    border-color: #3498db;
 }
 
-/* Texto do número */
 .poltrona .num {
     font-weight: bold;
     font-size: 0.9rem;
     display: block;
 }
 
-/* Texto do nome curto */
 .poltrona .nome-curto {
-    font-size: 0.65rem; /* Fonte menor para caber nomes */
+    font-size: 0.65rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 65px; /* Limita o tamanho do texto */
+    max-width: 65px;
     margin: 2px auto 0;
     display: block;
     color: #666;
 }
 
-/* Cores de Status das Poltronas (mantive as suas) */
+/* Cores de Status */
 .poltrona.livre {
     background-color: #ffffff;
     border-color: #cbd5e1;
 }
 
 .poltrona.parcial {
-    background-color: #fff3cd; /* Amarelo claro */
+    background-color: #fff3cd;
     border-color: #ffc107;
     color: #856404;
 }
 
 .poltrona.pago {
-    background-color: #d4edda; /* Verde claro */
+    background-color: #d4edda;
     border-color: #28a745;
     color: #155724;
 }

@@ -114,48 +114,66 @@ async function carregarResumo() {
 async function carregarPoltronas() {
     try {
         const res = await apiFetch(`${API_URL}/api/poltronas`);
-        const poltronas = await res.json(); // Array de 1 a 46
+        const poltronas = await res.json(); // Array com as 46 poltronas
 
         const container = document.getElementById('mapaPoltronas');
-        container.innerHTML = ''; // Limpa o mapa antigo
+        container.innerHTML = ''; // Limpa o mapa anterior
 
-        // Itera sobre o array de poltronas recebido da API
-        poltronas.forEach((p, index) => {
-            // 1. Cria o botão da poltrona (mantendo sua lógica original)
-            const btn = document.createElement('button');
-            btn.className = `poltrona ${p.status}`;
-            btn.onclick = () => abrirModal(p);
+        // Agrupa as poltronas em fileiras de 4 (2 à esquerda e 2 à direita)
+        for (let i = 0; i < poltronas.length; i += 4) {
+            const fileiraDiv = document.createElement('div');
+            fileiraDiv.className = 'fileira';
 
-            const spanNum = document.createElement('span');
-            spanNum.className = 'num';
-            spanNum.textContent = String(p.numero).padStart(2, '0');
+            // Pega o lote de até 4 poltronas para esta fileira
+            const subset = poltronas.slice(i, i + 4);
+            const p1 = subset[0] || null;
+            const p2 = subset[1] || null;
+            const p3 = subset[2] || null;
+            const p4 = subset[3] || null;
 
-            const spanNome = document.createElement('span');
-            spanNome.className = 'nome-curto';
-            btn.appendChild(spanNum);
-            btn.appendChild(spanNome);
+            // Função auxiliar para renderizar a poltrona ou um espaço vazio
+            const criarBotaoOuEspaco = (p) => {
+                if (!p) {
+                    const vazio = document.createElement('div');
+                    return vazio;
+                }
+                const btn = document.createElement('button');
+                btn.className = `poltrona ${p.status}`;
+                btn.onclick = () => abrirModal(p);
 
-            // Define o texto do nome (Livre ou primeiro nome) - usando textContent de forma segura
-            if (p.passageiro) {
-                spanNome.textContent = p.passageiro.split(' ')[0];
-            } else {
-                spanNome.textContent = 'Livre';
-                spanNome.style.color = '#999'; // Cor mais clara para "Livre"
-            }
-            
-            // 2. Adiciona a poltrona ao container Grid
-            container.appendChild(btn);
+                const spanNum = document.createElement('span');
+                spanNum.className = 'num';
+                spanNum.textContent = String(p.numero).padStart(2, '0');
 
-            // 3. LÓGICA DO CORREDOR:
-            // Se a poltrona atual for par e não for a última (46), adicione o elemento de corredor.
-            // Isso cria o espaço entre 01|02 [corredor] 03|04
-            // E 05|06 [corredor] 07|08, etc.
-            if (p.numero % 2 === 0 && p.numero < poltronas.length) {
-                const corredorDiv = document.createElement('div');
-                corredorDiv.className = 'corredor-espaco';
-                container.appendChild(corredorDiv);
-            }
-        });
+                const spanNome = document.createElement('span');
+                spanNome.className = 'nome-curto';
+                spanNome.textContent = p.passageiro ? p.passageiro.split(' ')[0] : 'Livre';
+                if (!p.passageiro) {
+                    spanNome.style.color = '#999';
+                }
+
+                btn.appendChild(spanNum);
+                btn.appendChild(spanNome);
+                return btn;
+            };
+
+            // Adiciona as 2 poltronas da esquerda
+            fileiraDiv.appendChild(criarBotaoOuEspaco(p1));
+            fileiraDiv.appendChild(criarBotaoOuEspaco(p2));
+
+            // Adiciona o corredor central
+            const corredorDiv = document.createElement('div');
+            corredorDiv.className = 'corredor';
+            corredorDiv.textContent = '';
+            fileiraDiv.appendChild(corredorDiv);
+
+            // Adiciona as 2 poltronas da direita
+            fileiraDiv.appendChild(criarBotaoOuEspaco(p3));
+            fileiraDiv.appendChild(criarBotaoOuEspaco(p4));
+
+            // Adiciona a fileira completa ao mapa do autocarro
+            container.appendChild(fileiraDiv);
+        }
 
     } catch (e) {
         console.error('Erro ao carregar poltronas', e);

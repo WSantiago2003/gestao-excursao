@@ -1,198 +1,296 @@
-const API_URL = '/api';
-let listaPoltronas = [];
+const API_URL = '';
 
-document.addEventListener('DOMContentLoaded', () => {
-    carregarDados();
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-    if (sessionStorage.getItem('autenticado') === 'true') {
-        document.getElementById('telaLogin').classList.remove('ativo');
-        carregarDados();
+// Verificação única de sessão ao carregar a página
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const res = await fetch(`${API_URL}/api/status-auth`);
+        const data = await res.json();
+        if (data.autenticado) {
+            const loginEl = document.getElementById('telaLogin');
+            loginEl.classList.remove('ativo');
+            loginEl.style.display = 'none';
+            carregarDados();
+        }
+    } catch (e) {
+        console.error('Erro ao verificar autenticação', e);
     }
 });
+
+// Função para limpar dados sensíveis da tela ao deslogar ou expirar a sessão
+function limparDadosTela() {
+    document.getElementById('mapaPoltronas').innerHTML = '';
+
+    document.getElementById('resumoLivres').textContent = '0';
+    document.getElementById('resumoOcupadas').textContent = '0';
+    document.getElementById('resumoArrecadado').textContent = 'R$ 0,00';
+    document.getElementById('resumoReceber').textContent = 'R$ 0,00';
+
+    document.getElementById('senhaAcesso').value = '';
+    fecharModal();
+}
+
+// Função auxiliar centralizada para requisições com tratamento de 401 (Sessão Expirada)
+async function apiFetch(url, options = {}) {
+    const res = await fetch(url, options);
+    if (res.status === 401) {
+        limparDadosTela();
+
+        const loginEl = document.getElementById('telaLogin');
+        loginEl.classList.add('ativo');
+        loginEl.style.display = 'flex';
+
+        alert('Sua sessão expirou. Faça login novamente.');
+        throw new Error('Não autorizado');
+    }
+    return res;
+}
 
 async function verificarSenha() {
     const senha = document.getElementById('senhaAcesso').value;
-    const res = await fetch(`${API_URL}/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ senha })
-    });
+    if (!senha) {
+        alert('Digite a senha de acesso.');
+        return;
+    }
 
-    if (res.ok) {
-        sessionStorage.setItem('autenticado', 'true');
-        document.getElementById('telaLogin').classList.remove('ativo');
-        carregarDados();
-    } else {
-        alert('Senha incorreta!');
+    try {
+        const res = await fetch(`${API_URL}/api/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ senha })
+        });
+
+        if (res.ok) {
+            document.getElementById('senhaAcesso').value = '';
+            const loginEl = document.getElementById('telaLogin');
+            loginEl.classList.remove('ativo');
+            loginEl.style.display = 'none';
+            carregarDados();
+        } else {
+            alert('Senha incorreta!');
+        }
+    } catch (e) {
+        alert('Erro ao conectar com o servidor.');
     }
 }
 
+async function fazerLogout() {
+    try {
+        const res = await fetch(`${API_URL}/api/logout`, { method: 'POST' });
+        if (!res.ok) throw new Error('Falha ao encerrar sessão.');
+
+        limparDadosTela();
+
+        const loginEl = document.getElementById('telaLogin');
+        loginEl.classList.add('ativo');
+        loginEl.style.display = 'flex';
+    } catch (e) {
+        console.error('Erro ao encerrar sessão', e);
+        alert('Não foi possível encerrar a sessão com segurança.');
+    }
+}
+
+// Carregamento otimizado com requisições paralelas independentes
 async function carregarDados() {
-    await carregarResumo();
-    await carregarPoltronas();
+    await Promise.all([
+        carregarResumo(),
+        carregarPoltronas()
+    ]);
 }
 
 async function carregarResumo() {
     try {
-        const res = await fetch(`${API_URL}/resumo`);
-        const dados = await res.json();
+        const res = await apiFetch(`${API_URL}/api/resumo`);
+        const data = await res.json();
 
-        document.getElementById('resumoLivres').innerText = dados.livres;
-        document.getElementById('resumoOcupadas').innerText = `${dados.ocupadas} (${dados.parciais} parc. / ${dados.pagas} pagas)`;
-        document.getElementById('resumoArrecadado').innerText = formatarMoeda(dados.total_arrecadado);
-        document.getElementById('resumoReceber').innerText = formatarMoeda(dados.total_a_receber);
-    } catch (erro) {
-        console.error('Erro ao carregar resumo:', erro);
+        document.getElementById('resumoLivres').textContent = data.livres;
+        document.getElementById('resumoOcupadas').textContent = `${data.ocupadas} (${data.parciais} parc. / ${data.pagas} pagas)`;
+        document.getElementById('resumoArrecadado').textContent = `R$ ${data.total_arrecadado.toFixed(2).replace('.', ',')}`;
+        document.getElementById('resumoReceber').textContent = `R$ ${data.total_a_receber.toFixed(2).replace('.', ',')}`;
+    } catch (e) {
+        console.error('Erro ao carregar resumo', e);
     }
 }
 
 async function carregarPoltronas() {
     try {
-        const res = await fetch(`${API_URL}/poltronas`);
-        listaPoltronas = await res.json();
-        desenharOnibus(listaPoltronas);
-    } catch (erro) {
-        console.error('Erro ao carregar poltronas:', erro);
-    }
-}
+        const res = await apiFetch(`${API_URL}/api/poltronas`);
+        const poltronas = await res.json();
 
-function desenharOnibus(poltronas) {
-    const mapa = document.getElementById('mapaPoltronas');
-    mapa.innerHTML = '';
+        const container = document.getElementById('mapaPoltronas');
+        container.innerHTML = '';
 
-    // Agrupa de 4 em 4 para formar as fileiras (2 esquerda + corredor + 2 direita)
-    for (let i = 0; i < poltronas.length; i += 4) {
-        const fileira = document.createElement('div');
-        fileira.className = 'fileira';
-
-        const grupo = poltronas.slice(i, i + 4);
-
-        grupo.forEach((p, idx) => {
-            // Adiciona o espaço do corredor após a 2ª poltrona da fileira
-            if (idx === 2) {
-                const corredor = document.createElement('div');
-                corredor.className = 'corredor';
-                corredor.innerText = '|';
-                fileira.appendChild(corredor);
-            }
-
-            const btn = document.createElement('div');
+        poltronas.forEach(p => {
+            const btn = document.createElement('button');
             btn.className = `poltrona ${p.status}`;
-            btn.onclick = () => abrirModal(p.numero);
+            btn.onclick = () => abrirModal(p);
 
-            const primeiroNome = p.passageiro ? p.passageiro.split(' ')[0] : 'Livre';
+            // Blindagem contra XSS usando textContent
+            const spanNum = document.createElement('span');
+            spanNum.className = 'num';
+            spanNum.textContent = String(p.numero).padStart(2, '0');
 
-            btn.innerHTML = `
-                <span class="num">${String(p.numero).padStart(2, '0')}</span>
-                <span class="nome-curto">${primeiroNome}</span>
-            `;
-            fileira.appendChild(btn);
+            const spanNome = document.createElement('span');
+            spanNome.className = 'nome-curto';
+            spanNome.textContent = p.passageiro ? p.passageiro.split(' ')[0] : 'Livre';
+
+            btn.appendChild(spanNum);
+            btn.appendChild(spanNome);
+            container.appendChild(btn);
         });
-
-        mapa.appendChild(fileira);
+    } catch (e) {
+        console.error('Erro ao carregar poltronas', e);
     }
 }
 
-function abrirModal(numero) {
-    const p = listaPoltronas.find(item => item.numero === numero);
-    if (!p) return;
+let poltronaAtual = null;
 
+function abrirModal(p) {
+    poltronaAtual = p.numero;
+    document.getElementById('modalNumero').textContent = String(p.numero).padStart(2, '0');
     document.getElementById('poltronaNumero').value = p.numero;
-    document.getElementById('modalNumero').innerText = String(p.numero).padStart(2, '0');
-    document.getElementById('passageiro').value = p.passageiro;
-    document.getElementById('telefone').value = p.telefone;
-    document.getElementById('documento').value = p.documento;
-    document.getElementById('valorTotal').value = p.valor_total.toFixed(2);
-    document.getElementById('valorPago').value = p.valor_pago.toFixed(2);
-    document.getElementById('novoPagamento').value = '';
-
-    // Mostra botão de liberar apenas se a poltrona já estiver ocupada
-    document.getElementById('btnLiberar').style.display = p.passageiro ? 'block' : 'none';
+    document.getElementById('passageiro').value = p.passageiro || '';
+    document.getElementById('telefone').value = p.telefone || '';
+    document.getElementById('documento').value = p.documento || '';
+    document.getElementById('valorTotal').value = p.valor_total;
+    document.getElementById('valorPago').value = p.valor_pago;
 
     recalcularRestante();
-    document.getElementById('modalPoltrona').classList.add('ativo');
+    document.getElementById('modalPoltrona').style.display = 'flex';
 }
 
 function fecharModal() {
-    document.getElementById('modalPoltrona').classList.remove('ativo');
-}
-
-function adicionarParcela() {
-    const campoNovo = document.getElementById('novoPagamento');
-    const campoPago = document.getElementById('valorPago');
-
-    const adicional = parseFloat(campoNovo.value) || 0;
-    const atual = parseFloat(campoPago.value) || 0;
-
-    if (adicional > 0) {
-        campoPago.value = (atual + adicional).toFixed(2);
-        campoNovo.value = '';
-        recalcularRestante();
-    }
+    document.getElementById('modalPoltrona').style.display = 'none';
+    poltronaAtual = null;
 }
 
 function recalcularRestante() {
     const total = parseFloat(document.getElementById('valorTotal').value) || 0;
     const pago = parseFloat(document.getElementById('valorPago').value) || 0;
     const restante = Math.max(0, total - pago);
+    document.getElementById('valorRestanteTexto').textContent = `R$ ${restante.toFixed(2).replace('.', ',')}`;
+}
 
-    const texto = document.getElementById('valorRestanteTexto');
-    texto.innerText = restante === 0 && total > 0 ? 'QUITADO (R$ 0,00)' : formatarMoeda(restante);
-    texto.className = restante === 0 && total > 0 ? 'quitado' : '';
+function adicionarParcela() {
+    const inputParcela = document.getElementById('novoPagamento');
+    const valorParcela = parseFloat(inputParcela.value);
+
+    if (isNaN(valorParcela) || valorParcela <= 0) {
+        alert('Digite um valor numérico válido para somar.');
+        return;
+    }
+
+    const inputPago = document.getElementById('valorPago');
+    const inputTotal = document.getElementById('valorTotal');
+    const pagoAtual = parseFloat(inputPago.value);
+    const total = parseFloat(inputTotal.value);
+
+    if (isNaN(pagoAtual) || isNaN(total)) {
+        alert('Os campos de valor total ou valor pago possuem dados inválidos.');
+        return;
+    }
+
+    const novoPago = pagoAtual + valorParcela;
+    if (novoPago > total) {
+        alert('O valor pago não pode ultrapassar o total da passagem.');
+        return;
+    }
+
+    inputPago.value = novoPago.toFixed(2);
+    inputParcela.value = '';
+    recalcularRestante();
 }
 
 async function salvarPoltrona(event) {
     event.preventDefault();
+    if (!poltronaAtual) return;
 
-    const numero = document.getElementById('poltronaNumero').value;
-    const payload = {
-        passageiro: document.getElementById('passageiro').value,
-        telefone: document.getElementById('telefone').value,
-        documento: document.getElementById('documento').value,
-        valor_total: parseFloat(document.getElementById('valorTotal').value) || 180.00,
-        valor_pago: parseFloat(document.getElementById('valorPago').value) || 0.00
+    const passageiroVal = document.getElementById('passageiro').value.trim();
+    const telefoneVal = document.getElementById('telefone').value.trim();
+    const documentoVal = document.getElementById('documento').value.trim();
+    
+    const valorTotalInput = document.getElementById('valorTotal').value;
+    const valorPagoInput = document.getElementById('valorPago').value;
+
+    const valor_total = parseFloat(valorTotalInput);
+    const valor_pago = parseFloat(valorPagoInput);
+
+    // Validação estricta contra entradas inválidas (NaN, infinitas ou negativas)
+    if (isNaN(valor_total) || isNaN(valor_pago) || !isFinite(valor_total) || !isFinite(valor_pago)) {
+        alert('Erro: Insira valores numéricos válidos nos campos financeiros.');
+        return;
+    }
+
+    if (valor_pago < 0 || valor_total < 0 || valor_pago > valor_total) {
+        alert('Atenção: O valor pago não pode ser negativo nem maior que o valor total.');
+        return;
+    }
+
+    const dados = {
+        passageiro: passageiroVal,
+        telefone: telefoneVal,
+        documento: documentoVal,
+        valor_total: valor_total,
+        valor_pago: valor_pago
     };
 
     try {
-        const res = await fetch(`${API_URL}/poltronas/${numero}`, {
+        const res = await apiFetch(`${API_URL}/api/poltronas/${poltronaAtual}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(dados)
         });
 
         if (res.ok) {
             fecharModal();
             carregarDados();
+        } else {
+            const err = await res.json();
+            alert(err.erro || 'Erro ao salvar poltrona');
         }
-    } catch (erro) {
-        console.error('Erro ao salvar poltrona:', erro);
+    } catch (e) {
+        console.error('Erro ao salvar', e);
     }
 }
 
 async function liberarPoltrona() {
-    const numero = document.getElementById('poltronaNumero').value;
-    if (!confirm(`Deseja realmente remover o passageiro e liberar a poltrona ${numero}?`)) return;
+    if (!poltronaAtual) return;
+    if (!confirm(`Deseja realmente liberar a poltrona ${poltronaAtual}?`)) return;
 
     try {
-        const res = await fetch(`${API_URL}/poltronas/${numero}/liberar`, {
+        const res = await apiFetch(`${API_URL}/api/poltronas/${poltronaAtual}/liberar`, {
             method: 'PUT'
         });
 
         if (res.ok) {
             fecharModal();
             carregarDados();
+        } else {
+            alert('Erro ao liberar poltrona');
         }
-    } catch (erro) {
-        console.error('Erro ao liberar poltrona:', erro);
+    } catch (e) {
+        console.error('Erro ao liberar', e);
     }
 }
 
-function formatarMoeda(valor) {
-    return Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
-
-function exportarListaEmbarque() {
-    window.location.href = `${API_URL}/exportar/embarque`;
+async function exportarListaEmbarque() {
+    try {
+        const res = await apiFetch(`${API_URL}/api/exportar/embarque`);
+        if (res.ok) {
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'lista_embarque_aparecida.csv';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            
+            // Libera o objeto da memória do navegador após o download (Evita Memory Leak)
+            window.URL.revokeObjectURL(url);
+        } else {
+            alert('Erro ao exportar lista.');
+        }
+    } catch (e) {
+        console.error('Erro ao exportar', e);
+    }
 }

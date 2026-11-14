@@ -338,3 +338,21 @@ input {
     background-color: #1a252f;
     transform: translateY(-2px);
 }
+
+/* Estilo para o Botão de Logout no Topo */
+.btn-logout {
+    background-color: #e74c3c;
+    color: #ffffff;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: bold;
+    transition: background-color 0.2s, transform 0.15s;
+}
+
+.btn-logout:hover {
+    background-color: #c0392b;
+    transform: translateY(-1px);
+}

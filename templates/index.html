@@ -9,9 +9,14 @@
 <body>
 
     <div class="container">
-        <header>
-            <h1>🚌 Romaria Aparecida do Norte</h1>
-            <p class="subtitulo">Controle de Poltronas e Pagamentos</p>
+        <header style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div>
+                <h1>🚌 Romaria Aparecida do Norte</h1>
+                <p class="subtitulo">Controle de Poltronas e Pagamentos</p>
+            </div>
+            <button onclick="fazerLogout()" style="background: #e74c3c; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: bold;">
+                🔒 Sair / Bloquear
+            </button>
         </header>
 
         <!-- Painel de Resumo Financeiro e Ocupação -->
@@ -58,7 +63,7 @@
     </div>
 
     <!-- Modal de Edição / Consulta de Pagamento -->
-    <div id="modalPoltrona" class="modal">
+    <div id="modalPoltrona" class="modal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Poltrona #<span id="modalNumero">01</span></h2>
@@ -117,15 +122,16 @@
         </div>
     </div>
 
-    <script src="/static/script.js"></script>
-</body>
     <!-- Tela de Bloqueio por Senha -->
-    <div id="telaLogin" class="modal ativo" style="background: #1a252f;">
+    <div id="telaLogin" class="modal ativo" style="background: #1a252f; display: flex;">
         <div class="modal-content" style="max-width: 360px; text-align: center;">
             <h2 style="margin-bottom: 10px;">🔒 Acesso Restrito</h2>
             <p style="font-size: 0.9rem; color: #666; margin-bottom: 15px;">Digite a senha da romaria para gerenciar as poltronas:</p>
-            <input type="password" id="senhaAcesso" placeholder="Senha" style="margin-bottom: 12px; text-align: center;">
-            <button class="btn-salvar" style="width: 100%;" onclick="verificarSenha()">Entrar</button>
+            <input type="password" id="senhaAcesso" placeholder="Senha" style="margin-bottom: 12px; text-align: center; width: 100%; padding: 8px;" onkeypress="if(event.key === 'Enter') verificarSenha()">
+            <button class="btn-salvar" style="width: 100%; padding: 10px;" onclick="verificarSenha()">Entrar</button>
         </div>
     </div>
+
+    <script src="/static/script.js"></script>
+</body>
 </html>
